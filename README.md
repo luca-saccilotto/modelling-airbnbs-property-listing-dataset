@@ -1,4 +1,4 @@
-# AiCore Scenario - Multimodal Property Intelligence System
+# AiCore Scenario - Multimodal Intelligence System
 
 This project aims to develop a framework to systematically train, tune, and evaluate a wide range of machine learning models, from simple regression to neural network models, that can be applied to various datasets.
 
