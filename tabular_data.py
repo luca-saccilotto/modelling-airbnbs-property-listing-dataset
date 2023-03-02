@@ -41,6 +41,21 @@ def set_default_feature_values(df):
     df[cols_to_fill].fillna(value = 1)
     return df
 
+# Define a function that returns the features and labels of your data in a tuple 
+def load_airbnb(df, labels):
+
+    """Identify text columns"""
+    text_columns = list(df.select_dtypes(include = "object").columns)
+    
+    """Drop text and label columns"""
+    drop_columns = text_columns + [labels]
+    features = df.drop(columns = drop_columns)
+
+    """Extract label columns"""
+    labels = df[labels]
+
+    return features, labels
+
 # Encapsulate all the processing code inside a function
 def clean_tabular_data(df):
     df = remove_rows_with_missing_ratings(df)
@@ -54,7 +69,10 @@ if the script is being run as the main program
 """
 if __name__ == "__main__":
     path = "airbnb-property-listings/tabular_data/listing.csv"
-    raw_data = pd.read_csv(path, index_col = "ID")
+    try:
+        raw_data = pd.read_csv(path, index_col = "ID")
+    except:
+        print("Failed to read input file")
     df = clean_tabular_data(raw_data)
     try:
         df.to_csv("airbnb-property-listings/tabular_data/clean_tabular_data.csv")
