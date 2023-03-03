@@ -50,9 +50,11 @@ def load_airbnb(df, labels) -> pd.DataFrame:
 # Encapsulate all the processing code inside a function
 def clean_tabular_data(df) -> pd.DataFrame:
     df.drop("Unnamed: 19", axis = 1, inplace = True)
+    df.dropna(inplace = True)
+    df.drop("4c917b3c-d693-4ee4-a321-f5babc728dc9")
+    set_default_feature_values(df)
     remove_rows_with_missing_ratings(df)
     combine_description_strings(df)
-    set_default_feature_values(df)
     return df
 
 # Ensure that the code inside it is only executed if the script is being run as the main program
@@ -63,9 +65,6 @@ if __name__ == "__main__":
     except:
         print("Failed to read input file")
     df = clean_tabular_data(raw_data)
-    # df["guests"] = df["guests"]
-    # df["bedrooms"] = df["bedrooms"].astype("int64")
-    # df["Category"] = df["Category"].astype("category")
     try:
         df.to_csv("airbnb-property-listings/tabular_data/clean_tabular_data.csv")
     except:
