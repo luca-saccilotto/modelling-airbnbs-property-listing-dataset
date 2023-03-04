@@ -9,7 +9,7 @@ print(type(df))
 
 # Load the data into two different variables
 X, y = load_airbnb(df, "Price_Night")
-X = X.select_dtypes(include = "number")
+# X = X.select_dtypes(include = "number")
 
 # Split the data into training, validation, and test sets
 X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size = 0.3)
