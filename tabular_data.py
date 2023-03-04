@@ -10,7 +10,7 @@ def remove_rows_with_missing_ratings(df) -> pd.DataFrame:
                              "Communication_rating",
                              "Location_rating",
                              "Check-in_rating",
-                             "Value_rating"], how = "any")
+                             "Value_rating"])
     return df
 
 # Define a function that combines the list items into the same string
@@ -18,7 +18,7 @@ def combine_description_strings(df) -> pd.DataFrame:
     
     def convert_description_strings(x: str):
         """
-        Converts a list of strings to a single string by
+        Convert a list of strings to a single string by
         concatenating the remaining strings
         
         """
@@ -28,7 +28,7 @@ def combine_description_strings(df) -> pd.DataFrame:
             x = "".join(x)
             return x
         except:
-            print(f"Failed to convert string: {x}")
+            # print(f"Failed to convert string: {x}")
             return np.nan
     
     df["Description"] = df["Description"].dropna().apply(convert_description_strings)
@@ -38,7 +38,7 @@ def combine_description_strings(df) -> pd.DataFrame:
 # Define a function to fill missing values with 1 in specific columns
 def set_default_feature_values(df) -> pd.DataFrame:
     cols_to_fill = ["guests", "beds", "bathrooms", "bedrooms"]
-    df[cols_to_fill] = df[cols_to_fill].fillna(1).astype("int64")
+    df[cols_to_fill] = df[cols_to_fill].apply(pd.to_numeric, errors = "coerce").fillna(1)
     return df
 
 # Define a function that returns the features and labels of your data in a tuple
@@ -49,21 +49,25 @@ def load_airbnb(df, labels) -> pd.DataFrame:
 
 # Encapsulate all the processing code inside a function
 def clean_tabular_data(df) -> pd.DataFrame:
-    # df.drop("ID", axis = 1, inplace = True)
-    df.drop("Unnamed: 19", axis = 1, inplace = True)
-    df.drop("4c917b3c-d693-4ee4-a321-f5babc728dc9", inplace = True)
+    """
+    Clean tabular data by removing rows with missing ratings,
+    combining description strings, and setting default feature values
+
+    """
     remove_rows_with_missing_ratings(df)
     combine_description_strings(df)
     set_default_feature_values(df)
-    df = df.dropna()
-    df = df.select_dtypes(include = "number")
+
+    """Return a dataframe contains only columns with numerical data types"""
+    df.drop("Unnamed: 19", axis = 1, inplace = True)
+    df = df.select_dtypes(include = ["int64", "float64"])
+
     return df
 
 # Ensure that the code inside it is only executed if the script is being run as the main program
 if __name__ == "__main__":
-    path = "airbnb-property-listings/tabular_data/listing.csv"
     try:
-        raw_data = pd.read_csv(path, index_col = "ID")
+        raw_data = pd.read_csv("airbnb-property-listings/tabular_data/listing.csv", index_col = "ID")
     except:
         print("Failed to read input file")
     df = clean_tabular_data(raw_data)
