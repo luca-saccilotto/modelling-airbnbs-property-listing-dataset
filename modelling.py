@@ -1,10 +1,11 @@
 # Import libraries
 import numpy as np
+import pandas as pd
 from tabular_data import load_airbnb
 from sklearn import model_selection, linear_model
 
 # Define the path to the file and print its data type
-df = "airbnb-property-listings\tabular_data\clean_tabular_data.csv"
+df = pd.read_csv("airbnb-property-listings/tabular_data/clean_tabular_data.csv")
 print(type(df))
 
 # Load the data into two different variables

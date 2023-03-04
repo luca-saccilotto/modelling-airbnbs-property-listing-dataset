@@ -49,7 +49,7 @@ def load_airbnb(df, labels) -> pd.DataFrame:
 
 # Encapsulate all the processing code inside a function
 def clean_tabular_data(df) -> pd.DataFrame:
-    df.drop("ID", axis = 1, inplace = True)
+    # df.drop("ID", axis = 1, inplace = True)
     df.drop("Unnamed: 19", axis = 1, inplace = True)
     df.drop("4c917b3c-d693-4ee4-a321-f5babc728dc9", inplace = True)
     remove_rows_with_missing_ratings(df)
