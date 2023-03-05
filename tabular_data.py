@@ -6,11 +6,11 @@ import pandas as pd
 # Define a function which removes missing values in the rating columns
 def remove_rows_with_missing_ratings(df) -> pd.DataFrame:
     df = df.dropna(subset = ["Cleanliness_rating",
-                             "Accuracy_rating",
-                             "Communication_rating",
-                             "Location_rating",
-                             "Check-in_rating",
-                             "Value_rating"])
+                            "Accuracy_rating",
+                            "Communication_rating",
+                            "Location_rating",
+                            "Check-in_rating",
+                            "Value_rating"])
     return df
 
 # Define a function that combines the list items into the same string

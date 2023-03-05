@@ -20,17 +20,27 @@ print(X_train.shape, y_train.shape)
 regressor = linear_model.SGDRegressor()
 regressor.fit(X_train, y_train)
 
-# Make predictions on the test data
-y_pred = regressor.predict(X_test)
+# Make predictions on the train and test data
+y_pred_train = regressor.predict(X_train)
+y_pred_test = regressor.predict(X_test)
 
 # Calculate the mean squared error of the predictions
-mse = metrics.mean_squared_error(y_test, y_pred)
-print("MSE: ", mse)
+mse_train = metrics.mean_squared_error(y_train, y_pred_train)
+print("MSE (Train): ", mse_train)
+
+mse_test = metrics.mean_squared_error(y_test, y_pred_test)
+print("MSE (Test): ", mse_test)
 
 # Calculate the root mean squared error
-rmse = np.sqrt(mse)
-print("RMSE: ", rmse)
+rmse_train = np.sqrt(mse_train)
+print("RMSE (Train): ", rmse_train)
+
+rmse_test = np.sqrt(mse_test)
+print("RMSE (Test): ", rmse_test)
 
 # Compute the R-Squared of the model on the training data
-r2 = regressor.score(X_train, y_train)
-print("R-Squared: ", r2)
+r2_train = regressor.score(X_train, y_train)
+print("R-Squared (Train): ", r2_train)
+
+r2_test = regressor.score(X_test, y_test)
+print("R-Squared (Test): ", r2_test)
