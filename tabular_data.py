@@ -28,7 +28,7 @@ def combine_description_strings(df) -> pd.DataFrame:
             x = "".join(x)
             return x
         except:
-            # print(f"Failed to convert string: {x}")
+            print(f"Failed to convert string: {x}")
             return np.nan
     
     df["Description"] = df["Description"].dropna().apply(convert_description_strings)
