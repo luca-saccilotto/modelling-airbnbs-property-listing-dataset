@@ -17,30 +17,30 @@ X_validation, X_test, y_validation, y_test = model_selection.train_test_split(X_
 print(X_train.shape, y_train.shape)
 
 # Create a simple regression model to predict the nightly cost of each listing
-regressor = linear_model.SGDRegressor()
-regressor.fit(X_train, y_train)
+sgdr_regressor = linear_model.SGDRegressor()
+sgdr_regressor.fit(X_train, y_train)
 
 # Make predictions on the train and test data
-y_pred_train = regressor.predict(X_train)
-y_pred_test = regressor.predict(X_test)
+y_train_pred = sgdr_regressor.predict(X_train)
+y_test_pred = sgdr_regressor.predict(X_test)
 
 # Calculate the mean squared error of the predictions
-mse_train = metrics.mean_squared_error(y_train, y_pred_train)
-print("MSE (Train): ", mse_train)
+mse_train = metrics.mean_squared_error(y_train, y_train_pred)
+print(f"MSE: {mse_train} (Train)")
 
-mse_test = metrics.mean_squared_error(y_test, y_pred_test)
-print("MSE (Test): ", mse_test)
+mse_test = metrics.mean_squared_error(y_test, y_test_pred)
+print(f"MSE: {mse_test} (Test)")
 
 # Calculate the root mean squared error
 rmse_train = np.sqrt(mse_train)
-print("RMSE (Train): ", rmse_train)
+print(f"RMSE: {rmse_train} (Train)")
 
 rmse_test = np.sqrt(mse_test)
-print("RMSE (Test): ", rmse_test)
+print(f"RMSE: {rmse_test} (Test)")
 
 # Compute the R-Squared of the model on the training data
-r2_train = regressor.score(X_train, y_train)
-print("R-Squared (Train): ", r2_train)
+r2_train = sgdr_regressor.score(X_train, y_train)
+print(f"R-Squared: {r2_train} (Train)")
 
-r2_test = regressor.score(X_test, y_test)
-print("R-Squared (Test): ", r2_test)
+r2_test = sgdr_regressor.score(X_test, y_test)
+print(f"R-Squared: {r2_test} (Test)")
