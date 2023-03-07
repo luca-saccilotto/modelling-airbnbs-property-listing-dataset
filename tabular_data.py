@@ -5,13 +5,12 @@ import pandas as pd
 
 # Define a function which removes missing values in the rating columns
 def remove_rows_with_missing_ratings(df) -> pd.DataFrame:
-    df = df.dropna(subset = [
-        "Cleanliness_rating",
-        "Accuracy_rating",
-        "Communication_rating",
-        "Location_rating",
-        "Check-in_rating",
-        "Value_rating"])
+    df = df.dropna(subset = ["Cleanliness_rating",
+                            "Accuracy_rating",
+                            "Communication_rating",
+                            "Location_rating",
+                            "Check-in_rating",
+                            "Value_rating"])
     return df
 
 # Define a function that combines the list items into the same string
@@ -65,7 +64,7 @@ def clean_tabular_data(df) -> pd.DataFrame:
 
     return df
 
-# Ensure that the code inside it is only executed if the script is being run as the main program
+# Ensure that the code inside it is only executed if the script is being run directly
 if __name__ == "__main__":
     try:
         raw_data = pd.read_csv("airbnb-property-listings/tabular_data/listing.csv", index_col = "ID")

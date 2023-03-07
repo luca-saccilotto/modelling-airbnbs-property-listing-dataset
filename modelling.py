@@ -5,15 +5,12 @@ import numpy as np
 import os
 import pandas as pd
 from tabular_data import load_airbnb
-from sklearn import linear_model, metrics, model_selection, preprocessing
+from sklearn import ensemble, linear_model, metrics, model_selection, preprocessing, tree
+import warnings
 
 # Define the file path and load the data
 df = pd.read_csv("airbnb-property-listings/tabular_data/clean_tabular_data.csv", index_col = "ID")
 X, y = load_airbnb(df, "Price_Night")
-
-# Fit and transform the data
-scaler = preprocessing.StandardScaler()
-X = scaler.fit_transform(X)
 
 # Split the data into training, validation, and test sets
 np.random.seed(1)
@@ -22,6 +19,12 @@ X_validation, X_test, y_validation, y_test = model_selection.train_test_split(X_
 
 # Print the shape of training data
 print(X_train.shape, y_train.shape, end = "\n\n")
+
+# Fit and transform the data
+scaler = preprocessing.StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_validation = scaler.transform(X_validation)
+X_test = scaler.transform(X_test)
 
 # Create a simple regression model to predict the nightly cost of each listing
 sgdr = linear_model.SGDRegressor()
@@ -60,16 +63,14 @@ performance_metrics = evaluate_predictions(y_train, y_test, y_train_pred, y_test
 print(performance_metrics, end = "\n\n")
 
 # Create a dictionary containing the training, validation, and testing data
-datasets = {"X_train": X_train, "y_train": y_train, 
-           "X_test": X_test, "y_test": y_test, 
-           "X_validation": X_validation, "y_validation": y_validation}
-
-# Create a dictionary containing the ranges of the hyperparameters to be tuned
-hyperparameters = {"alpha": [0.0001, 0.001, 0.01, 0.1],
-                   "learning_rate": ["constant", "optimal", "invscaling"],
-                   "max_iter": [1000, 2000, 3000],
-                   "tol": [1e-3, 1e-4, 1e-5],
-                   "penalty": ["l1", "l2"]}
+datasets = {
+    "X_train": X_train,
+    "y_train": y_train, 
+    "X_test": X_test, 
+    "y_test": y_test, 
+    "X_validation": X_validation, 
+    "y_validation": y_validation
+}
 
 # Implement a custom function to tune the hyperparameters of the model
 def custom_tune_regression_model_hyperparameters(model_class, datasets, hyperparameters):
@@ -112,14 +113,11 @@ def custom_tune_regression_model_hyperparameters(model_class, datasets, hyperpar
     """Return the best model, its hyperparameters, and performance metrics"""
     return best_model, best_params, best_metrics
 
-best_model, best_params, best_metrics = custom_tune_regression_model_hyperparameters(linear_model.SGDRegressor, datasets, hyperparameters)
-print("Model:", best_model, "RMSE:", best_metrics["Validation RMSE"], "R-Squared:", best_metrics["Validation R-Squared"])
-
 # Use "GridSearchCV" to tune the hyperparameters of the model
 def tune_regression_model_hyperparameters(model_class, datasets, hyperparameters):
 
     """Tuning hyperparameters"""
-    grid = model_selection.GridSearchCV(model_class, hyperparameters)
+    grid = model_selection.GridSearchCV(model_class, hyperparameters) # verbose = 10
     grid.fit(datasets["X_train"], datasets["y_train"])
 
     """Model prediction on validation set using best hyperparameters"""
@@ -136,21 +134,98 @@ def tune_regression_model_hyperparameters(model_class, datasets, hyperparameters
     
     return best_model, best_params, best_metrics
 
-best_model, best_params, best_metrics = tune_regression_model_hyperparameters(linear_model.SGDRegressor(), datasets, hyperparameters)
-print(f"Model: {best_model}, RMSE: {best_metrics['RMSE']:.3f}, R-Squared: {best_metrics['R-Squared']:.3f}")
-
 # Define a function to save the model
-def save_model(folder, best_model, best_params, best_metrics):
+def save_model(folder_name, best_model, best_params, best_metrics):
 
     """Create the folder if it doesn't exist"""
-    os.makedirs(folder, exist_ok = True)
+    os.makedirs(folder_name, exist_ok = True)
     
     """Save the model, its hyperparameters, and its metrics"""
-    joblib.dump(best_model, os.path.join(folder, "model.joblib"))
-    with open(os.path.join(folder, "hyperparameters.json"), 'w') as f:
+    joblib.dump(best_model, os.path.join(folder_name, "model.joblib"))
+    with open(os.path.join(folder_name, "hyperparameters.json"), 'w') as f:
         json.dump(best_params, f)
-    with open(os.path.join(folder, "metrics.json"), "w") as f:
+    with open(os.path.join(folder_name, "metrics.json"), "w") as f:
         json.dump(best_metrics, f)
 
-folder = os.path.join("models", "regression", "linear_regression")
-save_model(folder, best_model, best_params, best_metrics)
+# Create a dictionary containing the ranges of the hyperparameters to be tuned
+sgdr_hyperparams = {
+    "loss": ["huber", "epsilon_insensitive"],
+    "alpha": [0.0001, 0.001],
+    "learning_rate": ["optimal", "adaptive"],
+    "max_iter": [2000, 3000],
+    "penalty": ["l1", "l2"]
+}
+decision_tree_hyperparams = {
+    "criterion": ["friedman_mse", "absolute_error"],
+    "splitter": ["best", "random"],
+    "max_depth": [5, 10],
+    "min_samples_split": [2, 5],
+    "min_samples_leaf": [1, 2]
+}
+random_forest_hyperparams = {
+    "n_estimators": [50, 100],
+    "criterion": ["friedman_mse", "absolute_error"],
+    "max_depth": [5, 10],
+    "min_samples_split": [2, 5],
+    "min_samples_leaf": [1, 2],
+}
+gradient_boosting_hyperparams = {
+    "n_estimators": [50, 100],
+    "learning_rate": [0.01, 0.1],
+    "max_depth": [3, 5],
+    "min_samples_split": [2, 5],
+    "min_samples_leaf": [1, 2],
+}
+
+# Define a dictionary of models with corresponding hyperparameters and folder names
+models = {
+    "linear_regression": {
+        "model_class": linear_model.SGDRegressor(),
+        "hyperparameters": sgdr_hyperparams,
+        "folder_name": "linear_regression"
+    },
+    "decision_tree": {
+        "model_class": tree.DecisionTreeRegressor(),
+        "hyperparameters": decision_tree_hyperparams,
+        "folder_name": "decision_tree"
+    },
+    "random_forest": {
+        "model_class": ensemble.RandomForestRegressor(),
+        "hyperparameters": random_forest_hyperparams,
+        "folder_name": "random_forest"
+    },
+    "gradient_boosting": {
+        "model_class": ensemble.GradientBoostingRegressor(),
+        "hyperparameters": gradient_boosting_hyperparams,
+        "folder_name": "gradient_boosting"
+    }
+}
+
+# Define a function that tune, evaluate, and save all the models
+def evaluate_all_models():
+
+    for folder_name, model_info in models.items():
+
+        model_class = model_info["model_class"]
+        hyperparameters = model_info["hyperparameters"]
+
+        best_model, best_params, best_metrics = tune_regression_model_hyperparameters(model_class, datasets, hyperparameters)
+        print(f"Model: {best_model}, RMSE: {best_metrics['RMSE']:.3f}, R-Squared: {best_metrics['R-Squared']:.3f}")
+        
+        folder = os.path.join("models", "regression", folder_name)
+        save_model(folder, best_model, best_params, best_metrics)
+
+# Define a function that evaluates which model is the best
+def find_best_model():
+    best_model = None
+    
+    if rmse < best_rmse:
+        best_model = model
+            
+    return best_model, best_params, best_metrics
+
+# Ensure that the code inside it is only executed if the script is being run directly
+if __name__ == "__main__":
+    warnings.filterwarnings("ignore")
+    evaluate_all_models()
+    find_best_model()
