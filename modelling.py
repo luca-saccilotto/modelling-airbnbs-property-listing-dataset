@@ -18,7 +18,7 @@ X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_s
 X_validation, X_test, y_validation, y_test = model_selection.train_test_split(X_test, y_test, test_size = 0.5)
 
 # Print the shape of training data
-print(X_train.shape, y_train.shape, end = "\n\n")
+# print(X_train.shape, y_train.shape, end = "\n\n")
 
 # Fit and transform the data
 scaler = preprocessing.StandardScaler()
@@ -59,9 +59,6 @@ def evaluate_predictions(y_train, y_test, y_train_pred, y_test_pred):
     
     return results
 
-performance_metrics = evaluate_predictions(y_train, y_test, y_train_pred, y_test_pred)
-print(performance_metrics, end = "\n\n")
-
 # Create a dictionary containing the training, validation, and testing data
 datasets = {
     "X_train": X_train,
@@ -89,7 +86,7 @@ def custom_tune_regression_model_hyperparameters(model_class, datasets, hyperpar
     best_rmse = float("inf")
     best_metrics = {}
 
-    for c in combinations:
+    for combination in combinations:
         model = model_class(alpha = c["alpha"], learning_rate = c["learning_rate"], max_iter = c["max_iter"], tol = c["tol"], penalty = c["penalty"])
         model.fit(datasets["X_train"], datasets["y_train"])
 
@@ -105,7 +102,7 @@ def custom_tune_regression_model_hyperparameters(model_class, datasets, hyperpar
         """
         if rmse_validation < best_rmse:
             best_model = model
-            best_params = c
+            best_params = combination
             best_rmse = rmse_validation
             best_metrics["Validation RMSE"] = round(rmse_validation, 3)
             best_metrics["Validation R-Squared"] = round(r2_validation, 3)
@@ -130,7 +127,7 @@ def tune_regression_model_hyperparameters(model_class, datasets, hyperparameters
     """Store best model, best hyperparameters, and best metrics in a dictionary"""
     best_model = grid.best_estimator_
     best_params = grid.best_params_
-    best_metrics = {"RMSE": rmse, "R-Squared": r2}
+    best_metrics = {"RMSE": round(rmse, 3), "R-Squared": round(r2, 3)}
     
     return best_model, best_params, best_metrics
 
@@ -202,30 +199,52 @@ models = {
 }
 
 # Define a function that tune, evaluate, and save all the models
-def evaluate_all_models():
+def evaluate_all_models(models):
 
-    for folder_name, model_info in models.items():
+    for model_name, model_info in models.items():
 
         model_class = model_info["model_class"]
         hyperparameters = model_info["hyperparameters"]
 
         best_model, best_params, best_metrics = tune_regression_model_hyperparameters(model_class, datasets, hyperparameters)
         print(f"Model: {best_model}, RMSE: {best_metrics['RMSE']:.3f}, R-Squared: {best_metrics['R-Squared']:.3f}")
-        
-        folder = os.path.join("models", "regression", folder_name)
-        save_model(folder, best_model, best_params, best_metrics)
 
-# Define a function that evaluates which model is the best
-def find_best_model():
-    best_model = None
+        path = os.path.join("models", "regression", model_name)
+        save_model(path, best_model, best_params, best_metrics)
     
-    if rmse < best_rmse:
-        best_model = model
-            
+# Define a function to find the best overall regression model
+def find_best_model(models):
+
+    best_model = None
+    best_params = {}
+    best_rmse = float("inf")
+    best_metrics = {}
+
+    for model_name, model_info in models.items():
+
+        """Load model class from the dictionary"""
+        model_class = model_info["model_class"]
+
+        """Load hyperparameters and metrics from JSON files"""
+        hyperparams_path = os.path.join("models", "regression", model_name, "hyperparameters.json")
+        with open(hyperparams_path, "r") as f:
+            hyperparameters = json.load(f)
+        metrics_path = os.path.join("models", "regression", model_name, "metrics.json")
+        with open(metrics_path, "r") as f:
+            metrics = json.load(f)
+
+        """Compare RMSE metric to find the best model"""
+        if metrics["RMSE"] < best_rmse:
+            best_rmse = metrics["RMSE"]
+            best_model = model_class
+            best_params = hyperparameters
+            best_metrics = metrics
+
     return best_model, best_params, best_metrics
 
 # Ensure that the code inside it is only executed if the script is being run directly
 if __name__ == "__main__":
     warnings.filterwarnings("ignore")
-    evaluate_all_models()
-    find_best_model()
+    evaluate_all_models(models)
+    best_model, best_params, best_metrics = find_best_model(models)
+    print(f"Model: {best_model}, Hyperparameters: {best_params}, RMSE: {best_metrics['RMSE']:.3f}, R-Squared: {best_metrics['R-Squared']:.3f}")
