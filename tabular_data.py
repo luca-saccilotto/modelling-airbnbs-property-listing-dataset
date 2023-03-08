@@ -60,7 +60,6 @@ def clean_tabular_data(df) -> pd.DataFrame:
 
     """Return a dataframe contains only columns with numerical data types"""
     df.drop("Unnamed: 19", axis = 1, inplace = True)
-    df = df.select_dtypes(include = ["int64", "float64"])
 
     return df
 

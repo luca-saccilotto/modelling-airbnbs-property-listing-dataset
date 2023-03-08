@@ -14,11 +14,12 @@ X, y = load_airbnb(df, "Price_Night")
 
 # Split the data into training, validation, and test sets
 np.random.seed(1)
+X = X.select_dtypes(include = ["int64", "float64"])
 X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_size = 0.3)
 X_validation, X_test, y_validation, y_test = model_selection.train_test_split(X_test, y_test, test_size = 0.5)
 
 # Print the shape of training data
-# print(X_train.shape, y_train.shape, end = "\n\n")
+print(X_train.shape, y_train.shape, end = "\n\n")
 
 # Fit and transform the data
 scaler = preprocessing.StandardScaler()
@@ -35,27 +36,34 @@ y_train_pred = sgdr.predict(X_train)
 y_test_pred = sgdr.predict(X_test)
 
 # Define a function to evaluate the predictions on the training and testing data
-def evaluate_predictions(y_train, y_test, y_train_pred, y_test_pred):
+def evaluate_model_performance(y_train, y_train_pred, y_test, y_test_pred):
 
-    """Calculate MSE for training and testing data"""
-    mse_train = metrics.mean_squared_error(y_train, y_train_pred)
-    mse_test = metrics.mean_squared_error(y_test, y_test_pred)
+    """Create a dictionary to store the results"""
+    results = {}
+    
+    """Evaluate the model performance on the training set"""
+    mse_train = round(metrics.mean_squared_error(y_train, y_train_pred), 3)
+    rmse_train = round(np.sqrt(mse_train), 3)
+    r2_train = round(metrics.r2_score(y_train, y_train_pred), 3)
 
-    """Calculate RMSE for training and testing data"""
-    rmse_train = np.sqrt(mse_train)
-    rmse_test = np.sqrt(mse_test)
-    
-    """Calculate R-Squared for training and testing data"""
-    r2_train = metrics.r2_score(y_train, y_train_pred)
-    r2_test = metrics.r2_score(y_test, y_test_pred)
-    
-    """Return the results as a dictionary"""
-    results = {"Train MSE": round(mse_train, 3),
-               "Test MSE": round(mse_test, 3),
-               "Train RMSE": round(rmse_train, 3),
-               "Test RMSE": round(rmse_test, 3),
-               "Train R-Squared": round(r2_train, 3),
-               "Test R-Squared": round(r2_test, 3)}
+    """Add the training results to the dictionary"""
+    results["Train"] = {
+        "MSE": mse_train,
+        "RMSE": rmse_train,
+        "R-Squared": r2_train
+    }
+
+    """Evaluate the model performance on the testing set"""
+    mse_test = round(metrics.mean_squared_error(y_test, y_test_pred), 3)
+    rmse_test = round(np.sqrt(mse_test), 3)
+    r2_test = round(metrics.r2_score(y_test, y_test_pred), 3)
+
+    """Add the testing results to the dictionary"""
+    results["Test"] = {
+        "MSE": mse_test,
+        "RMSE": rmse_test,
+        "R-Squared": r2_test
+    }
     
     return results
 
@@ -139,7 +147,7 @@ def save_model(folder_name, best_model, best_params, best_metrics):
     
     """Save the model, its hyperparameters, and its metrics"""
     joblib.dump(best_model, os.path.join(folder_name, "model.joblib"))
-    with open(os.path.join(folder_name, "hyperparameters.json"), 'w') as f:
+    with open(os.path.join(folder_name, "hyperparameters.json"), "w") as f:
         json.dump(best_params, f)
     with open(os.path.join(folder_name, "metrics.json"), "w") as f:
         json.dump(best_metrics, f)
