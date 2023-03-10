@@ -14,3 +14,8 @@ In Milestone 4, the script `modelling_regression.py` was created, which loads an
 To optimize the model's hyperparameters, two functions have been implemented. The first function, `custom_tune_regression_model_hyperparameters`, allows for manual tuning of the model's hyperparameters through a nested list comprehension. The second function, `tune_regression_model_hyperparameters`, employs `GridSearchCV` to perform automated hyperparameter tuning.
 
 Finally, a function to tune, evaluate, and save multiple regression models called `evaluate_all_models` is defined. It takes in a dictionary of models, along with their corresponding hyperparameters. The regression models included are linear regression, decision tree, random forest, and gradient boosting. The best overall regression model is found by the `find_best_model` function, which compares their metrics.
+
+## Milestone 5
+In Milestone 5, the `modelling_classification.py` script was developed, replicating the previous regression model steps, but applying them to classification models. To enhance the model's performance, the `tune_classification_model_hyperparameters` function was introduced, utilizing `GridSearchCV` for automated hyperparameter tuning.
+
+To prevent overfitting, two techniques were implemented. The first is cross-validation, which involves splitting the dataset into training and validation sets and assessing the model's performance on the validation set. This approach can identify overfitting and allow for model adjustments. The second technique is regularization, which adds a penalty term to the model's loss function to discourage overfitting.

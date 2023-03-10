@@ -4,9 +4,11 @@ import json
 import numpy as np
 import os
 import pandas as pd
-from tabular_data import load_airbnb
 from sklearn import ensemble, linear_model, metrics, model_selection, preprocessing, tree
 import warnings
+
+# Import methods defined previously
+from tabular_data import load_airbnb
 
 # Define the file path and load the data
 df = pd.read_csv("airbnb-property-listings/tabular_data/clean_tabular_data.csv", index_col = "ID")
@@ -19,7 +21,7 @@ X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, test_s
 X_validation, X_test, y_validation, y_test = model_selection.train_test_split(X_test, y_test, test_size = 0.5)
 
 # Print the shape of training data
-print(X_train.shape, y_train.shape, end = "\n\n")
+print(X_train.shape, y_train.shape)
 
 # Fit and transform the data
 scaler = preprocessing.StandardScaler()
@@ -95,13 +97,13 @@ def custom_tune_regression_model_hyperparameters(model_class, datasets, hyperpar
     best_metrics = {}
 
     for combination in combinations:
-        model = model_class(alpha = c["alpha"], learning_rate = c["learning_rate"], max_iter = c["max_iter"], tol = c["tol"], penalty = c["penalty"])
+        model = model_class(alpha = c["alpha"], learning_rate = combination["learning_rate"], max_iter = combination["max_iter"], tol = combination["tol"], penalty = combination["penalty"])
         model.fit(datasets["X_train"], datasets["y_train"])
 
         """Use the trained model to make predictions on the validation set"""
         y_pred_validation = model.predict(datasets["X_validation"])
-        rmse_validation = metrics.mean_squared_error(datasets["y_validation"], y_pred_validation, squared = False)
-        r2_validation = metrics.r2_score(datasets["y_validation"], y_pred_validation)
+        rmse_validation = round(metrics.mean_squared_error(datasets["y_validation"], y_pred_validation, squared = False), 3)
+        r2_validation = round(metrics.r2_score(datasets["y_validation"], y_pred_validation), 3)
 
         """
         The combination of hyperparameters that results in the lowest 
@@ -112,8 +114,8 @@ def custom_tune_regression_model_hyperparameters(model_class, datasets, hyperpar
             best_model = model
             best_params = combination
             best_rmse = rmse_validation
-            best_metrics["Validation RMSE"] = round(rmse_validation, 3)
-            best_metrics["Validation R-Squared"] = round(r2_validation, 3)
+            best_metrics["Validation RMSE"] = rmse_validation
+            best_metrics["Validation R-Squared"] = r2_validation
 
     """Return the best model, its hyperparameters, and performance metrics"""
     return best_model, best_params, best_metrics
@@ -126,30 +128,30 @@ def tune_regression_model_hyperparameters(model_class, datasets, hyperparameters
     grid.fit(datasets["X_train"], datasets["y_train"])
 
     """Model prediction on validation set using best hyperparameters"""
-    y_pred = grid.predict(datasets["X_validation"])
+    y_val_pred = grid.predict(datasets["X_validation"])
 
     """Calculate metrics on validation set"""
-    rmse = metrics.mean_squared_error(datasets["y_validation"], y_pred, squared = False)
-    r2 = metrics.r2_score(datasets["y_validation"], y_pred)
+    rmse_validation = round(metrics.mean_squared_error(datasets["y_validation"], y_val_pred, squared = False), 3)
+    r2_validation = round(metrics.r2_score(datasets["y_validation"], y_val_pred), 3)
 
     """Store best model, best hyperparameters, and best metrics in a dictionary"""
     best_model = grid.best_estimator_
     best_params = grid.best_params_
-    best_metrics = {"RMSE": round(rmse, 3), "R-Squared": round(r2, 3)}
+    best_metrics = {"RMSE": rmse_validation, "R-Squared": r2_validation}
     
     return best_model, best_params, best_metrics
 
 # Define a function to save the model
-def save_model(folder_name, best_model, best_params, best_metrics):
+def save_model(path, best_model, best_params, best_metrics):
 
     """Create the folder if it doesn't exist"""
-    os.makedirs(folder_name, exist_ok = True)
+    os.makedirs(path, exist_ok = True)
     
     """Save the model, its hyperparameters, and its metrics"""
-    joblib.dump(best_model, os.path.join(folder_name, "model.joblib"))
-    with open(os.path.join(folder_name, "hyperparameters.json"), "w") as f:
+    joblib.dump(best_model, os.path.join(path, "model.joblib"))
+    with open(os.path.join(path, "hyperparameters.json"), "w") as f:
         json.dump(best_params, f)
-    with open(os.path.join(folder_name, "metrics.json"), "w") as f:
+    with open(os.path.join(path, "metrics.json"), "w") as f:
         json.dump(best_metrics, f)
 
 # Create a dictionary containing the ranges of the hyperparameters to be tuned
@@ -186,23 +188,19 @@ gradient_boosting_hyperparams = {
 models = {
     "linear_regression": {
         "model_class": linear_model.SGDRegressor(),
-        "hyperparameters": sgdr_hyperparams,
-        "folder_name": "linear_regression"
+        "hyperparameters": sgdr_hyperparams
     },
     "decision_tree": {
         "model_class": tree.DecisionTreeRegressor(),
-        "hyperparameters": decision_tree_hyperparams,
-        "folder_name": "decision_tree"
+        "hyperparameters": decision_tree_hyperparams
     },
     "random_forest": {
         "model_class": ensemble.RandomForestRegressor(),
-        "hyperparameters": random_forest_hyperparams,
-        "folder_name": "random_forest"
+        "hyperparameters": random_forest_hyperparams
     },
     "gradient_boosting": {
         "model_class": ensemble.GradientBoostingRegressor(),
-        "hyperparameters": gradient_boosting_hyperparams,
-        "folder_name": "gradient_boosting"
+        "hyperparameters": gradient_boosting_hyperparams
     }
 }
 
@@ -244,6 +242,7 @@ def find_best_model(models):
         """Compare RMSE metric to find the best model"""
         if metrics["RMSE"] < best_rmse:
             best_rmse = metrics["RMSE"]
+
             best_model = model_class
             best_params = hyperparameters
             best_metrics = metrics
@@ -255,4 +254,4 @@ if __name__ == "__main__":
     warnings.filterwarnings("ignore")
     evaluate_all_models(models)
     best_model, best_params, best_metrics = find_best_model(models)
-    print(f"Model: {best_model}, Hyperparameters: {best_params}, RMSE: {best_metrics['RMSE']:.3f}, R-Squared: {best_metrics['R-Squared']:.3f}")
+    print(f"- Model: {best_model}, Hyperparameters: {best_params}, RMSE: {best_metrics['RMSE']:.3f}, R-Squared: {best_metrics['R-Squared']:.3f}")
