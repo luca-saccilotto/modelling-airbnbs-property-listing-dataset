@@ -1,5 +1,4 @@
 # Import libraries
-import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -9,6 +8,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 # Import methods defined previously
 from tabular_data import load_airbnb
+
+torch.manual_seed(1)
 
 # Create a PyTorch dataset that returns a tuple when indexed
 class AirbnbNightlyPriceRegressionDataset(Dataset):
@@ -82,7 +83,7 @@ def train(model, dataloader, epochs = 10):
             ## Extract the features and labels from the batch
             features, labels = batch
             ## Compute the model's prediction and the corresponding loss
-            prediction = model(features).squeeze()
+            prediction = model(features)
             loss = F.mse_loss(prediction, labels)
             loss.backward()
             print(round(loss.item(), 3))
@@ -90,7 +91,7 @@ def train(model, dataloader, epochs = 10):
             optimizer.step()
             optimizer.zero_grad()
             ## Visualise the loss function using TensorBoard
-            writer.add_scalar("Loss", loss.item(), batch_idx)
+            writer.add_scalars("Train Loss", {"train_loss": loss.item()}, batch_idx)
             ## Increment the batch index
             batch_idx += 1
 
@@ -103,7 +104,7 @@ def train(model, dataloader, epochs = 10):
             loss = F.mse_loss(prediction, labels)
             print(round(loss.item(), 3))
             ## Visualise the loss function using TensorBoard
-            writer.add_scalar("Loss", loss.item(), batch_idx2)
+            writer.add_scalars("Validation Loss", {"validation_loss": loss.item()}, batch_idx2)
             ## Increment the batch index
             batch_idx2 += 1
 
