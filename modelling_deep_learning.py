@@ -9,8 +9,6 @@ from torch.utils.tensorboard import SummaryWriter
 # Import methods defined previously
 from tabular_data import load_airbnb
 
-torch.manual_seed(1)
-
 # Create a PyTorch dataset that returns a tuple when indexed
 class AirbnbNightlyPriceRegressionDataset(Dataset):
 
